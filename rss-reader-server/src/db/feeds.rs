@@ -26,8 +26,12 @@ fn get_current_working_dir() -> String {
 
 pub fn setup_feeds_db() -> Connection {
     println!("{}", get_current_working_dir());
-    let conn = Connection::open(format!("{}{}", get_current_working_dir(), "/db/feeds.db"))
-        .expect("DB - Feeds: Connection failed");
+    let conn = Connection::open(format!(
+        "{}{}",
+        get_current_working_dir(),
+        "/src/db/feeds.db"
+    ))
+    .expect("DB - Feeds: Connection failed");
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS category (
