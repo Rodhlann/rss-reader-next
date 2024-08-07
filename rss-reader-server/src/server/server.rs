@@ -1,10 +1,11 @@
-use axum::{routing::get, Json, Router};
+use axum::{response::IntoResponse, routing::get, Json, Router};
+use reqwest::StatusCode;
 use serde_json::{json, Value};
 
-use crate::{db::get_feeds, feeds::fetch_feed_json};
+use crate::{db::{self, get_feeds, persist_feed}, feeds::fetch_feed_json};
 
-async fn root() -> Json<Value> {
-    let feeds = get_feeds();
+async fn feeds() -> impl IntoResponse {
+    let feeds: Vec<db::Feed> = get_feeds().expect("TODO");
     let mut values: Vec<Value> = vec![];
     for feed in feeds {
         values.push(fetch_feed_json(&feed.url).await);
@@ -12,6 +13,12 @@ async fn root() -> Json<Value> {
     Json(json!(values))
 }
 
+async fn add_feed(Json(input): Json<db::Feed>) -> impl IntoResponse {
+    let _ = persist_feed(input);
+    StatusCode::CREATED
+}
+
 pub fn app() -> Router {
-    Router::new().route("/", get(root))
+    Router::new()
+        .route("/", get(feeds).post(add_feed))
 }
