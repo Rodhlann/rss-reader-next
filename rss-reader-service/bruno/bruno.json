@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "name": "feed-test-requests",
+  "name": "rss-reader-service",
   "type": "collection",
   "ignore": [
     "node_modules",
