@@ -1,5 +1,5 @@
 mod feeds;
-mod rss;
+mod xml;
 
 pub use feeds::*;
-pub use rss::*;
+pub use xml::*;

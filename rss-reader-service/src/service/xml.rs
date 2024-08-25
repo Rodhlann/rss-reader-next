@@ -8,48 +8,48 @@ use serde_json::Value;
 
 #[derive(Debug)]
 #[allow(dead_code)]
-pub enum FetchRssError {
+pub enum FetchXmlError {
   Network(reqwest::Error),
   Parse(rss::Error),
   Io(io::Error)
 }
 
-impl From<reqwest::Error> for FetchRssError {
+impl From<reqwest::Error> for FetchXmlError {
   fn from(error: reqwest::Error) -> Self {
-      FetchRssError::Network(error)
+      FetchXmlError::Network(error)
   }
 }
 
-impl From<rss::Error> for FetchRssError {
+impl From<rss::Error> for FetchXmlError {
   fn from(error: rss::Error) -> Self {
-      FetchRssError::Parse(error)
+      FetchXmlError::Parse(error)
   }
 }
 
-impl From<io::Error> for FetchRssError {
+impl From<io::Error> for FetchXmlError {
   fn from(error: io::Error) -> Self {
-      FetchRssError::Io(error)
+      FetchXmlError::Io(error)
   }
 }
 
-impl IntoResponse for FetchRssError {
+impl IntoResponse for FetchXmlError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
-          FetchRssError::Network(_) => (StatusCode::BAD_GATEWAY, "Failed to fetch RSS feed."),
-          FetchRssError::Parse(_) => (StatusCode::BAD_REQUEST, "Failed to parse RSS feed."),
-          FetchRssError::Io(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error."),
+          FetchXmlError::Network(_) => (StatusCode::BAD_GATEWAY, "Failed to fetch feed XML."),
+          FetchXmlError::Parse(_) => (StatusCode::BAD_REQUEST, "Failed to parse feed XML."),
+          FetchXmlError::Io(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error."),
         };
         (status, error_message).into_response()
     }
 }
 
-async fn fetch_rss_xml(route: &String) -> Result<Channel, FetchRssError> {
+async fn fetch_feed_xml(route: &String) -> Result<Channel, FetchXmlError> {
   let content = reqwest::get(route).await?.bytes().await?;
   let channel = Channel::read_from(&content[..])?;
   Ok(channel)
 }
 
-pub async fn fetch_rss_feed_json(feed_url: &String) -> Value {
-  let xml_channel = fetch_rss_xml(feed_url).await.unwrap();
+pub async fn fetch_feed_json(feed_url: &String) -> Value {
+  let xml_channel = fetch_feed_xml(feed_url).await.unwrap();
   xml_string_to_json(xml_channel.to_string(), &Config::new_with_defaults()).unwrap()
 }

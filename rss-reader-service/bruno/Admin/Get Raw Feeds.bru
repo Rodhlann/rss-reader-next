@@ -1,11 +1,15 @@
 meta {
   name: Get Raw Feeds
   type: http
-  seq: 4
+  seq: 2
 }
 
 get {
   url: https://rss-reader-service.shuttleapp.rs/admin
   body: none
-  auth: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{GITHUB_ACCESS_TOKEN}}
 }
