@@ -3,19 +3,22 @@ use serde_json::{json, Value};
 
 use crate::{db::{FeedDataSource, FeedInput}, AppState};
 
-use super::fetch_rss_feed_json;
+use super::fetch_feed_json;
 
 pub async fn get_rss_feeds(
   State(state): State<AppState>,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
+  println!("Fetching all RSS feed data");
+
   let feed_db = FeedDataSource::new(state.db);
   let mut values: Vec<Value> = Vec::new();
 
   match feed_db.get_feeds().await {
     Ok(feeds) => {
       for feed in feeds {
+        println!("Preparing feed: {}", feed.name);
         // TODO: parallelize
-        values.push(fetch_rss_feed_json(&feed.url).await)
+        values.push(fetch_feed_json(&feed.url).await)
       }
       Ok(Json(json!(values)))
     },
@@ -26,6 +29,8 @@ pub async fn get_rss_feeds(
 pub async fn get_raw_feeds(
   State(state): State<AppState>,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
+  println!("Fetching raw RSS feed data");
+
   let feed_db = FeedDataSource::new(state.db);
   match feed_db.get_feeds().await {
     Ok(feeds) => Ok(Json(feeds)),
