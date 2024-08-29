@@ -1,24 +1,54 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
-import Feeds from "@/components/feeds";
+import RawFeed, { RawFeedInput } from "@/components/rawFeed";
 
 export default function Admin() {
   const { data: session } = useSession()
- 
-  if (session) {
+  const [ rawFeeds, setRawFeeds ] = useState<RawFeedInput[]>([]);
+  const [ loading, setLoading ] = useState(true);
+
+  useEffect(() => {
+    if (session) {
+      const fetchRawFeeds = async () => {
+        try {
+          const response = await fetch('/api/rawFeeds')
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch feed data")
+          }
+
+          const data = await response.json()
+          setRawFeeds(data)
+        } catch (error) {
+          console.error("Error fetching feed data:", error)
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      fetchRawFeeds()
+    }
+  }, [session])
+
+  if (!session) {
     return (
       <>
-        Signed in as {session?.user?.email} <br />
-        <button onClick={() => signOut()}>Sign out</button>
-
-        <Feeds />
+        Not signed in <br />
+        <button onClick={() => signIn()}>Sign in</button>
       </>
     )
   }
+
+  if (loading) {
+    return <div>Fetching feed data...</div>
+  }
+
   return (
     <>
-      Not signed in <br />
-      <button onClick={() => signIn()}>Sign in</button>
+      Admin: {session?.user?.name} <br />
+      <button onClick={() => signOut()}>Sign out</button>
+      
+      {rawFeeds.map((feed) => <RawFeed key={`raw-feed-${feed.id}`} rawFeed={feed} />)}
     </>
-  )
+  );
 }
