@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse};
+use axum::{http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, FromRow};
 
@@ -97,7 +97,23 @@ impl FeedDataSource {
         ));
     }
 
-    Ok(())
+    let res = match sqlx::query_as::<_, Feed>(
+      "SELECT feeds.id, feeds.name, feeds.url, categories.name AS category
+      FROM feeds
+      INNER JOIN categories
+      ON
+      feeds.category_id = categories.id
+      WHERE feeds.name = $1;")
+      .bind(feed.name)
+      .fetch_one(&self.db)
+      .await {
+        Ok(res) => res,
+        Err(e) => {
+          return Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()));
+        }
+      };
+    
+    Ok(Json(res))
   }
 
   pub async fn delete_feed(self, id: i32) -> Result<impl IntoResponse, impl IntoResponse> {
