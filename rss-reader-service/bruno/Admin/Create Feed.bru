@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: https://rss-reader-service.shuttleapp.rs/admin
+  url: {{service-url}}/admin
   body: json
   auth: bearer
 }
@@ -15,9 +15,9 @@ auth:bearer {
 }
 
 body:json {
-  {
-    "name": "Node.js Blog",
-    "url": "https://nodejs.org/en/feed/blog.xml",
-    "category": "Code"
-  }
+    {
+      "name": "Node.js Blog",
+      "url": "https://nodejs.org/en/feed/blog.xml",
+      "category": "Code"
+    }
 }

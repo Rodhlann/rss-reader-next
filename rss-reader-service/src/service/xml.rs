@@ -6,6 +6,12 @@ use reqwest::StatusCode;
 use rss::Channel;
 use serde_json::Value;
 
+// TODO: deserialize RSS and Atom feeds, return only relevant JSON content to client
+// TODO: Allow for filtering by query param? 
+pub struct JsonFeed {
+
+}
+
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum FetchXmlError {
