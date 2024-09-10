@@ -3,20 +3,14 @@ use std::io;
 use axum::response::{Response, IntoResponse};
 use quickxml_to_serde::{xml_string_to_json, Config};
 use reqwest::StatusCode;
-use rss::Channel;
-use serde_json::Value;
 
-// TODO: deserialize RSS and Atom feeds, return only relevant JSON content to client
-// TODO: Allow for filtering by query param? 
-pub struct JsonFeed {
-
-}
+use super::Feed;
 
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum FetchXmlError {
   Network(reqwest::Error),
-  Parse(rss::Error),
+  Parse(String),
   Io(io::Error)
 }
 
@@ -28,7 +22,7 @@ impl From<reqwest::Error> for FetchXmlError {
 
 impl From<rss::Error> for FetchXmlError {
   fn from(error: rss::Error) -> Self {
-      FetchXmlError::Parse(error)
+      FetchXmlError::Parse(error.to_string())
   }
 }
 
@@ -49,13 +43,19 @@ impl IntoResponse for FetchXmlError {
     }
 }
 
-async fn fetch_feed_xml(route: &String) -> Result<Channel, FetchXmlError> {
-  let content = reqwest::get(route).await?.bytes().await?;
-  let channel = Channel::read_from(&content[..])?;
-  Ok(channel)
+async fn fetch_feed_xml(route: &String) -> Result<String, FetchXmlError> {
+  let content = reqwest::get(route).await?.text().await?;
+  Ok(content)
 }
 
-pub async fn fetch_feed_json(feed_url: &String) -> Value {
-  let xml_channel = fetch_feed_xml(feed_url).await.unwrap();
-  xml_string_to_json(xml_channel.to_string(), &Config::new_with_defaults()).unwrap()
+pub async fn fetch_feed_json(feed_title: &String, feed_url: &String) -> Result<Feed, FetchXmlError> {
+  let xml_string = fetch_feed_xml(feed_url).await.unwrap();
+  let value = xml_string_to_json(xml_string.clone(), &Config::new_with_defaults()).unwrap();
+  if xml_string.contains("<rss") {
+    Ok(Feed::from_rss(feed_title.to_string(), value))
+  } else if xml_string.contains("<feed") {
+    Ok(Feed::from_atom(feed_title.to_string(), value))
+  } else {
+    Err(FetchXmlError::Parse("Unknown feed syntax".to_string()))
+  }
 }
