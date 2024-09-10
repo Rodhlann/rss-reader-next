@@ -1,3 +1,3 @@
-mod auth;
+mod authorization;
 
-pub use auth::*;
+pub use authorization::*;
