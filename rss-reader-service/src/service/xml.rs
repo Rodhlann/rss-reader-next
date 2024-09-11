@@ -4,7 +4,7 @@ use axum::response::{Response, IntoResponse};
 use quickxml_to_serde::{xml_string_to_json, Config};
 use reqwest::StatusCode;
 
-use super::Feed;
+use super::{Feed, FeedsParam};
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -48,14 +48,21 @@ async fn fetch_feed_xml(route: &String) -> Result<String, FetchXmlError> {
   Ok(content)
 }
 
-pub async fn fetch_feed_json(feed_title: &String, feed_url: &String) -> Result<Feed, FetchXmlError> {
+pub async fn fetch_feed_json(
+  feed_title: &String, 
+  feed_category: &String, 
+  feed_url: &String,
+  max_entries: usize
+) -> Result<Feed, FetchXmlError> {
   let xml_string = fetch_feed_xml(feed_url).await.unwrap();
   let value = xml_string_to_json(xml_string.clone(), &Config::new_with_defaults()).unwrap();
   if xml_string.contains("<rss") {
-    Ok(Feed::from_rss(feed_title.to_string(), value))
+    Ok(Feed::from_rss(feed_title.to_string(), feed_category.to_string(), max_entries, value))
   } else if xml_string.contains("<feed") {
-    Ok(Feed::from_atom(feed_title.to_string(), value))
+    Ok(Feed::from_atom(feed_title.to_string(), feed_category.to_string(), max_entries, value))
   } else {
     Err(FetchXmlError::Parse("Unknown feed syntax".to_string()))
   }
 }
+
+//2024-09-03 13:51:48 UTC
