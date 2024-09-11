@@ -1,4 +1,5 @@
 use axum::{extract::{Path, Query, State}, response::IntoResponse, Json};
+use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
@@ -15,19 +16,19 @@ pub struct Entry {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Feed {
-  pub title: String,
+  pub name: String,
   pub category: String,
   pub entries: Vec<Entry>
 }
 
 impl Feed {
-  pub fn from_rss(title: String, category: String, max_entries: usize, value: Value) -> Self {
+  pub fn from_rss(name: String, category: String, max_entries: usize, value: Value) -> Self {
     let items = rss_to_json(value).rss.channel.item;
     let item_count = max_entries.min(items.len());
     let trimmed_items = &items[..item_count];
 
     Self {
-      title,
+      name,
       category,
       entries: trimmed_items.iter().map(|item| Entry {
         title: item.title.to_string(),
@@ -37,12 +38,12 @@ impl Feed {
     }
   }
 
-  pub fn from_atom(title: String, category: String, max_entries: usize, value: Value) -> Self {
+  pub fn from_atom(name: String, category: String, max_entries: usize, value: Value) -> Self {
     let items = atom_to_json(value).feed.entry;
     let item_count = max_entries.min(items.len());
     let trimmed_items = &items[..item_count];
     Self {
-      title,
+      name,
       category,
       entries: trimmed_items.iter().map(|item| Entry {
         title: item.title.to_string(),
@@ -67,19 +68,33 @@ pub async fn get_rss_feeds(
   let feed_db = FeedDataSource::new(state.db);
   let max_entries = params.max_entries.unwrap_or(5);
 
-  let mut values: Vec<Feed> = Vec::new();
-
   match feed_db.get_feeds().await {
     Ok(feeds) => {
-      for feed in feeds {
+      let fetch_futures = feeds.into_iter().map(|feed| {
         println!("Preparing feed: {}", feed.name);
-        // TODO: parallelize
-        values.push(
-          fetch_feed_json(&feed.name, &feed.category, &feed.url, max_entries)
-            .await
-            .map_err(|e| e.into_response())?
-        )
-      }
+
+        let name = feed.name.clone();
+        let category = feed.category.clone();
+        let url = feed.url.clone();
+
+        async move {
+          let result = fetch_feed_json(&name, &category, &url, max_entries).await;
+          (name, result)
+        }
+      }).collect::<Vec<_>>();
+
+      let results = join_all(fetch_futures).await;
+
+      let mut values: Vec<Feed> = Vec::new();
+      results.into_iter().for_each(|(name, result)| {
+        match result {
+          Ok(feed) => values.push(feed),
+          Err(err) => {
+            println!("Failed to fetch feed: {} - {:?}", name, err)
+          }
+        }
+      });
+      
       Ok(Json(json!(values)))
     },
     Err(e) => Err(e.into_response())
