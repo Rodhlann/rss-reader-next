@@ -65,7 +65,7 @@ pub async fn get_rss_feeds(
 ) -> Result<impl IntoResponse, impl IntoResponse> {
   println!("Fetching all RSS feed data");
 
-  let feed_db = FeedDataSource::new(state.db);
+  let feed_db = FeedDataSource::new(state.db.clone());
   let max_entries = params.max_entries.unwrap_or(5);
 
   match feed_db.get_feeds().await {
@@ -76,9 +76,16 @@ pub async fn get_rss_feeds(
         let name = feed.name.clone();
         let category = feed.category.clone();
         let url = feed.url.clone();
+        let db = state.db.clone();
 
         async move {
-          let result = fetch_feed_json(&name, &category, &url, max_entries).await;
+          let result = fetch_feed_json(
+            &name, 
+            &category, 
+            &url,
+            max_entries, 
+            db
+          ).await;
           (name, result)
         }
       }).collect::<Vec<_>>();
