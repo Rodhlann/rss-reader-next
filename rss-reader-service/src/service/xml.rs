@@ -1,4 +1,3 @@
-use core::fmt;
 use std::io;
 
 use axum::response::{Response, IntoResponse};
@@ -15,8 +14,8 @@ use super::Feed;
 #[allow(dead_code)]
 pub enum FetchXmlError {
   Network(reqwest::Error),
-  Parse(String),
   Io(io::Error),
+  Parse(String),
   Cache(String)
 }
 
@@ -36,8 +35,8 @@ impl IntoResponse for FetchXmlError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
           FetchXmlError::Network(_) => (StatusCode::BAD_GATEWAY, "Failed to fetch feed XML."),
-          FetchXmlError::Parse(_) => (StatusCode::BAD_REQUEST, "Failed to parse feed XML."),
           FetchXmlError::Io(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error."),
+          FetchXmlError::Parse(_) => (StatusCode::BAD_REQUEST, "Failed to parse feed XML."),
           FetchXmlError::Cache(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Cache error.")
         };
         (status, error_message).into_response()
@@ -55,10 +54,11 @@ pub async fn fetch_feed_json(
   feed_category: &str, 
   feed_url: &str,
   max_entries: usize,
-  db: &PgPool,
+  db: PgPool,
 ) -> Result<Feed, FetchXmlError> {
   let cache = CacheDataSource::new(db.to_owned());
 
+  // TODO: All of this caching logic should be abstracted
   let cached = cache.get_cached_value(feed_name.to_string()).await
     .map_err(|e| FetchXmlError::Cache(e.to_string()))?;
 
@@ -68,8 +68,11 @@ pub async fn fetch_feed_json(
         cached_value.xml_string
       } else {
         let result = fetch_feed_xml(feed_url.to_string()).await?;
+        // TODO: Figure out how to better handle these cache borrows
+        let cache = CacheDataSource::new(db.to_owned());
         cache.clear_cache(feed_name.to_string()).await
           .map_err(|e| FetchXmlError::Cache(e.to_string()))?;
+        let cache = CacheDataSource::new(db.to_owned());
         cache.cache_value(CacheInput { name: feed_name.to_string(), xml_string: result.clone() }).await
           .map_err(|e| FetchXmlError::Cache(e.to_string()))?;
         result
@@ -77,6 +80,7 @@ pub async fn fetch_feed_json(
     } 
     None => {
       let result = fetch_feed_xml(feed_url.to_string()).await?;
+      let cache = CacheDataSource::new(db.to_owned());
       cache.cache_value(CacheInput { name: feed_name.to_string(), xml_string: result.clone() }).await
         .map_err(|e| FetchXmlError::Cache(e.to_string()))?;
       result

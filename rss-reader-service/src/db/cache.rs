@@ -7,16 +7,12 @@ use sqlx::{PgPool, FromRow};
 #[derive(Debug)]
 pub enum CacheError {
     Database(sqlx::Error),
-    NotFound(String), // Specific error for not found
-    Internal(String), // General internal error
 }
 
 impl fmt::Display for CacheError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             CacheError::Database(err) => write!(f, "Database error: {}", err),
-            CacheError::NotFound(name) => write!(f, "Cache entry not found for: {}", name),
-            CacheError::Internal(msg) => write!(f, "Internal error: {}", msg),
         }
     }
 }
@@ -74,7 +70,7 @@ impl CacheDataSource {
     println!("Caching feed: {}", cache_value.name);
 
     if let Err(e) = sqlx::query(
-        "INSERT INTO cache (name, json) VALUES ($1, $2);"
+        "INSERT INTO cache (name, xml_string) VALUES ($1, $2);"
           // ON CONFLICT (name) DO UPDATE
           // SET json = $2, created_date = NOW();"
     )
