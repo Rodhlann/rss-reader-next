@@ -1,5 +1,5 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_json::{from_value, Value};
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -30,9 +30,20 @@ where
   D: Deserializer<'de>,
 {
   let s = String::deserialize(deserializer)?;
-  // Atom Date: Tue, 03 Sep 2024 13:51:48 GMT
-  let dt = NaiveDateTime::parse_from_str(&s, "%a, %d %b %Y %H:%M:%S GMT").map_err(serde::de::Error::custom)?;
-  Ok(DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
+
+  // Define multiple date formats
+  let formats = [
+    "%a, %d %b %Y %H:%M:%S %z",  // Example: Wed, 11 Sep 2024 00:00:00 -0400
+    "%a, %d %b %Y %H:%M:%S GMT", // Example: Tue, 03 Sep 2024 13:51:48 GMT
+  ];
+
+  for format in &formats {
+    if let Ok(dt) = NaiveDateTime::parse_from_str(&s, format) {
+      return Ok(dt.and_utc());
+    }
+  }
+
+  Err(de::Error::custom(&format!("Failed to parse RSS date: {}", &s)))
 }
                
 pub fn rss_to_json(value: Value) -> RSSObject {
