@@ -50,7 +50,7 @@ impl CacheDataSource {
   }
 
   pub async fn get_cached_value(self, name: String) -> Result<Option<CacheValue>, CacheError> {    
-    println!("Attempting to fetch cached feed: {}", name);
+    println!("Fetching cached feed: {}", name);
 
     let res = match sqlx::query_as::<_, CacheValue>(
       "SELECT * FROM cache where name = $1;")
