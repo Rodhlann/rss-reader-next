@@ -1,6 +1,6 @@
 use auth::auth_middleware;
 use axum::{middleware, routing::{delete, get}, Router};
-use service::{delete_feed, get_raw_feeds, get_rss_feeds};
+use service::{delete_feed, get_raw_feeds, get_rss_feeds, schedule_cache_clear};
 use shuttle_runtime::SecretStore;
 use sqlx::PgPool;
 
@@ -28,6 +28,9 @@ async fn main(
         .ok_or_else(|| panic!("Missing expected ENV_VAR: GITHUB_USER_ID"));
 
     let state = AppState { db, secrets };
+
+    schedule_cache_clear(&state.db).await
+        .unwrap_or_else(|e| panic!("Failed to start cache clear job: {}", e));
 
     let unprotected_routes = Router::new()
         .route("/feeds", 

@@ -1,7 +1,7 @@
 # Caching
 
-- [ ] Automatically delete cached records after X minutes (this will probably require a service level cron job)
-- [ ] Abstract caching logic outside of xml.rs
+- [x] Automatically delete cached records after X minutes (this will probably require a service level cron job)
+- [x] Abstract caching logic outside of xml.rs
 
 # Feeds
 

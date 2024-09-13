@@ -43,9 +43,9 @@ pub struct CacheDataSource {
 }
 
 impl CacheDataSource {
-  pub fn new(db: PgPool) -> Self {
+  pub fn new(db: &PgPool) -> Self {
     Self {
-      db
+      db: db.clone()
     }
   }
 
@@ -71,8 +71,6 @@ impl CacheDataSource {
 
     if let Err(e) = sqlx::query(
         "INSERT INTO cache (name, xml_string) VALUES ($1, $2);"
-          // ON CONFLICT (name) DO UPDATE
-          // SET json = $2, created_date = NOW();"
     )
     .bind(&cache_value.name)
     .bind(&cache_value.xml_string)
@@ -85,15 +83,32 @@ impl CacheDataSource {
     Ok(())
   }
 
-  pub async fn clear_cache(self, name: String) -> Result<(), CacheError> {
-    println!("Clearing cached feed: {}", name);
-
-    if let Err(e) = sqlx::query_as::<_, CacheValue>("DELETE FROM cache WHERE name = $1")
-      .bind(name)
+  pub async fn clear_cache(self) -> Result<(), CacheError> {
+    let stale_cache = match sqlx::query_as::<_, CacheValue>(
+      "SELECT * FROM cache 
+        WHERE created_date < NOW() - INTERVAL '10 minutes';")
       .fetch_all(&self.db)
       .await {
-        return Err(CacheError::Database(e));
-      }
+        Ok(res) => res,
+        Err(e) => {
+          return Err(CacheError::Database(e));
+        }
+      };
+
+    let stale_names: Vec<String> = stale_cache.iter().map(|c| c.name.clone()).collect();
+    if !stale_names.is_empty() {
+      println!("Clearing stale cache items: [{}]", stale_names.join(", "));
+
+      if let Err(e) = sqlx::query_as::<_, CacheValue>(
+        "DELETE FROM cache
+          WHERE created_date < NOW() - INTERVAL '10 minutes';"
+      )
+        .fetch_all(&self.db)
+        .await {
+          return Err(CacheError::Database(e));
+        }
+    }
+
     Ok(())
   }
 }
