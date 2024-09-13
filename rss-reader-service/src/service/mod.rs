@@ -2,8 +2,11 @@ mod feeds;
 mod xml;
 mod rss;
 mod atom;
+mod cache;
 
 pub use feeds::*;
-pub use xml::*;
-pub use rss::*;
-pub use atom::*;
+pub use cache::*;
+
+use xml::*;
+use rss::*;
+use atom::*;

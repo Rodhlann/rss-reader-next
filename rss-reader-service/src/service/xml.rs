@@ -1,14 +1,13 @@
 use std::io;
 
 use axum::response::{Response, IntoResponse};
-use chrono::{Duration, Utc};
 use quickxml_to_serde::{xml_string_to_json, Config};
 use reqwest::StatusCode;
 use sqlx::PgPool;
 
 use crate::db::{CacheDataSource, CacheInput};
 
-use super::Feed;
+use super::{fetch_cached, Feed};
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -56,41 +55,25 @@ pub async fn fetch_feed_json(
   max_entries: usize,
   db: PgPool,
 ) -> Result<Feed, FetchXmlError> {
-  let cache = CacheDataSource::new(db.to_owned());
-
-  // TODO: All of this caching logic should be abstracted
-  let cached = cache.get_cached_value(feed_name.to_string()).await
-    .map_err(|e| FetchXmlError::Cache(e.to_string()))?;
-
-  let xml_string = match cached {
-    Some(cached_value) => {
-      if cached_value.created_date + Duration::minutes(10) > Utc::now() {
-        cached_value.xml_string
-      } else {
-        let result = fetch_feed_xml(feed_url.to_string()).await?;
-        // TODO: Figure out how to better handle these cache borrows
-        let cache = CacheDataSource::new(db.to_owned());
-        cache.clear_cache(feed_name.to_string()).await
-          .map_err(|e| FetchXmlError::Cache(e.to_string()))?;
-        let cache = CacheDataSource::new(db.to_owned());
-        cache.cache_value(CacheInput { name: feed_name.to_string(), xml_string: result.clone() }).await
-          .map_err(|e| FetchXmlError::Cache(e.to_string()))?;
-        result
-      }
-    } 
-    None => {
-      let result = fetch_feed_xml(feed_url.to_string()).await?;
-      let cache = CacheDataSource::new(db.to_owned());
-      cache.cache_value(CacheInput { name: feed_name.to_string(), xml_string: result.clone() }).await
-        .map_err(|e| FetchXmlError::Cache(e.to_string()))?;
-      result
-    }
+  let xml_string: String = if let Some(cache_value) = fetch_cached(feed_name, &db).await
+    .map_err(|e| FetchXmlError::Cache(e.to_string()))? 
+  {
+    // If cached xml_string exists return cached value
+    println!("Resolving cached feed: {feed_name}");
+    cache_value.xml_string
+  } else {
+    // Else fetch xml_string, cache it, and return new value
+    println!("No cached feed, fetching live: {feed_name}");
+    let new_xml_string = fetch_feed_xml(feed_url.to_string()).await?;
+    let cache = CacheDataSource::new(&db.to_owned());
+    cache.cache_value(CacheInput { name: feed_name.to_string(), xml_string: new_xml_string.to_string() }).await
+      .map_err(|e| FetchXmlError::Cache(e.to_string()))?;
+    new_xml_string
   };
 
   let value = xml_string_to_json(xml_string.clone(), &Config::new_with_defaults())
     .map_err(|e| FetchXmlError::Parse(e.to_string()))?;
 
-  // TODO: cache value
   if xml_string.contains("<rss") {
     Ok(Feed::from_rss(feed_name.to_string(), feed_category.to_string(), max_entries, value))
   } else if xml_string.contains("<feed") {
