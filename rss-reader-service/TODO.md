@@ -6,4 +6,5 @@
 # Feeds
 
 - [ ] Allow updates of feeds
-- [ ] Allow bulk importing of feeds as json (result of RAW feeds query)
+- [ ] Drop unused categories? Cascade?
+- [x] Allow bulk importing of feeds as json (result of RAW feeds query)

@@ -1,6 +1,6 @@
 use auth::auth_middleware;
-use axum::{middleware, routing::{delete, get}, Router};
-use service::{delete_feed, get_raw_feeds, get_rss_feeds, schedule_cache_clear};
+use axum::{middleware, routing::{delete, get, post}, Router};
+use service::{batch_create_feeds, delete_feed, get_raw_feeds, get_rss_feeds, schedule_cache_clear};
 use shuttle_runtime::SecretStore;
 use sqlx::PgPool;
 
@@ -41,6 +41,9 @@ async fn main(
         .route("/admin", 
             get(get_raw_feeds)
             .post(create_feed)
+        )
+        .route("/admin/batch",
+            post(batch_create_feeds)
         )
         .route("/admin/:id",
             delete(delete_feed)

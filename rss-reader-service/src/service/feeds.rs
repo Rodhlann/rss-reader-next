@@ -120,12 +120,26 @@ pub async fn get_raw_feeds(
   }
 }
 
+pub async fn batch_create_feeds(
+  State(state): State<AppState>,
+  Json(feeds): Json<Vec<FeedInput>>
+) -> Result<impl IntoResponse, impl IntoResponse> {
+  let feed_db = FeedDataSource::new(state.db);
+  match feed_db.batch_create_feeds(feeds).await {
+    Ok(feeds) => Ok(Json(feeds)),
+    Err(e) => Err(e.into_response())
+  }
+}
+
 pub async fn create_feed(
   State(state): State<AppState>,
   Json(feed): Json<FeedInput>
 ) -> Result<impl IntoResponse, impl IntoResponse> {
   let feed_db = FeedDataSource::new(state.db);
-  feed_db.create_feed(feed).await
+  match feed_db.create_feed(feed).await {
+    Ok(feeds) => Ok(Json(feeds)),
+    Err(e) => Err(e.into_response())
+  }
 }
 
 pub async fn delete_feed(
