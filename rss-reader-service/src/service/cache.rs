@@ -36,7 +36,13 @@ pub async fn schedule_cache_clear(db: &PgPool) -> Result<(), JobSchedulerError> 
 
   println!("Scheduling cache clear job");
 
-  // Schedule cache clear every 5 minutes, deletes records greater than 10 minutes old
+  // Run cache clear on startup
+  let cache = CacheDataSource::new(&db);
+  if let Err(e) = cache.clear_cache().await {
+    eprintln!("Failed to clear cache: {}", e);
+  }
+
+  // Schedule cache clear every X minutes, deletes records greater than X minutes old
   sched.add(
     Job::new_repeated(Duration::from_secs(300), move |_uuid, _l| {
       println!("Running cache clear job");

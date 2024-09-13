@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse, Json};
+use axum::{http::StatusCode, response::IntoResponse};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, FromRow};
 
@@ -28,7 +28,7 @@ impl FeedDataSource {
     }
   }
 
-  pub async fn get_feeds(self) -> Result<Vec<Feed>, impl IntoResponse> {    
+  pub async fn get_feeds(&self) -> Result<Vec<Feed>, impl IntoResponse> {    
     let res = match sqlx::query_as::<_, Feed>(
       "SELECT feeds.id, feeds.name, feeds.url, categories.name AS category
       FROM feeds
@@ -46,7 +46,24 @@ impl FeedDataSource {
     Ok(res)
   }
 
-  pub async fn create_feed(self, feed: FeedInput) -> Result<impl IntoResponse, impl IntoResponse> {
+  pub async fn batch_create_feeds(&self, feeds: Vec<FeedInput>) -> Result<Vec<Feed>, (StatusCode, String)> {
+    println!("Batch creating feeds: {:?}", feeds);
+
+    let mut created_feeds: Vec<Feed> = Vec::new();
+
+    for feed in feeds {
+        match self.create_feed(feed).await {
+          Ok(feed) => created_feeds.push(feed),
+          Err((status, err_msg)) => {
+            eprintln!("Failed to create feed: {} - {}", status, err_msg);
+          }
+        }
+    }
+
+    Ok(created_feeds)
+}
+
+  pub async fn create_feed(&self, feed: FeedInput) -> Result<Feed, (StatusCode, String)> {
     println!("Creating new feed: {:?}", feed);
 
     let new_category_id = sqlx::query_scalar(
@@ -113,10 +130,10 @@ impl FeedDataSource {
         }
       };
     
-    Ok(Json(res))
+    Ok(res)
   }
 
-  pub async fn delete_feed(self, id: i32) -> Result<impl IntoResponse, impl IntoResponse> {
+  pub async fn delete_feed(&self, id: i32) -> Result<impl IntoResponse, impl IntoResponse> {
     println!("Deleting feed: {}", id);
 
     if let Err(e) = sqlx::query_as::<_,Feed>("DELETE FROM feeds WHERE id = $1")
