@@ -1,8 +1,8 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { Feed } from "./api/feeds";
 import { FeedContent } from "@/components/FeedContent/feedContent";
 import { Filter } from "@/components/Filter/filter";
+import { Feed, Entry } from "./api/feeds";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -59,7 +59,7 @@ export default function Home() {
                       <h2>{feed.name}</h2>
                       <label className="feed-category-label">{feed.category}</label>
                     </div>
-                    {feed.entries.map((entry) =>
+                    {feed.entries.map((entry: Entry) =>
                       <FeedContent key={`entry-${entry.title.toLowerCase().replace(' ', '-')}`} data={entry} />
                     )}
                   </div>
