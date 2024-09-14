@@ -1,0 +1,34 @@
+a {
+  text-decoration: underline;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: plum;
+}
+
+.raw-feed-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 10vw;
+}
+
+.raw-feed {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 2fr 3fr 2fr 1fr 1fr;
+  grid-template-rows: 1fr;
+  grid-column-gap: 5px;
+  margin-bottom: 5px;
+}
+
+.raw-feed:first-child {
+  font-weight: bold;
+  font-size: large;
+  border-bottom: 1px solid white;
+}
+
+.add-raw-feed-button {
+  align-self: flex-start;
+}

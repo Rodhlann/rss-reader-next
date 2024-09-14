@@ -9,6 +9,9 @@ export const authOptions = {
       clientSecret: process.env.GITHUB_SECRET || '',
     }),
   ],
+  session: {
+    maxAge: 60 * 60 // invalidate after 1 hour
+  },
   jwt: {
     encryption: true,
     secret: process.env.NEXTAUTH_SECRET

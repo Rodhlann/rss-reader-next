@@ -47,15 +47,11 @@ export default function RawFeed({ rawFeed, setAdding, addFeed, deleteFeed, editi
   if (editMode) {
     return (
       <>
-        <div>
+        <div className="raw-feed">
           <input type='text' value={name} onChange={(e) => setName(e.target.value)} />
-          &nbsp;|&nbsp;
           <input type='text' value={url} onChange={(e) => setUrl(e.target.value)} />
-          &nbsp;|&nbsp;
           <input type='text' value={category} onChange={(e) => setCategory(e.target.value)} />
-          &nbsp;|&nbsp;
           <button onClick={cancelEditMode}>Cancel</button>
-          &nbsp;|&nbsp;
           <button onClick={submitChanges}>Submit</button>
         </div>
         { validationError && 
@@ -68,15 +64,12 @@ export default function RawFeed({ rawFeed, setAdding, addFeed, deleteFeed, editi
   }
 
   return (
-    <div>
-      {name}
-      &nbsp;|&nbsp;
-      {url}
-      &nbsp;|&nbsp;
-      {category}
-      &nbsp;|&nbsp;
+    <div className="raw-feed">
+      <span>{name}</span>
+      <a href={url}>{url}</a>
+      <span>{category}</span>
       <button onClick={() => setEditMode(true)}>Edit</button>
-      { deleteFeed && <>&nbsp;|&nbsp;<button onClick={() => deleteFeed(rawFeed?.id)}>Delete</button></> }
+      { deleteFeed && <button onClick={() => deleteFeed(rawFeed?.id)}>Delete</button> }
     </div>
   )
 }

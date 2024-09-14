@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
-import RawFeed, { RawFeedInput, RawFeedItem } from "@/components/rawFeed";
+import RawFeed, { RawFeedItem } from "@/components/rawFeed";
+import './Admin.css'
 
 export default function Admin() {
   const { data: session } = useSession()
+
   const [ rawFeeds, setRawFeeds ] = useState<RawFeedItem[]>([]);
   const [ loading, setLoading ] = useState(true);
   const [ adding, setAdding ] = useState(false);
@@ -72,6 +74,7 @@ export default function Admin() {
     return (
       <>
         Not signed in <br />
+        <button onClick={() => window.location.href = "/"}>Home</button>
         <button onClick={() => signIn()}>Sign in</button>
       </>
     )
@@ -84,13 +87,17 @@ export default function Admin() {
   return (
     <>
       Admin: {session?.user?.name} <br />
+      <button onClick={() => window.location.href = "/"}>Home</button>
       <button onClick={() => signOut()}>Sign out</button>
       
-      { rawFeeds.map((feed) => <RawFeed key={`raw-feed-${feed.id}`} rawFeed={feed} deleteFeed={feed.id ? deleteFeed : undefined} />) }
-      { adding
-        ? <RawFeed key={`raw-feed-add`} editing={adding} setAdding={setAdding} addFeed={addFeed} />
-        : <button onClick={() => setAdding(true)}>Add Feed</button>
-      }
+      <div className="raw-feed-list">
+        <div className="raw-feed">
+          <span>Feed Name</span><span>Feed URL</span><span>Feed Category</span>
+        </div>
+        { rawFeeds.map((feed) => <RawFeed key={`raw-feed-${feed.id}`} rawFeed={feed} deleteFeed={feed.id ? deleteFeed : undefined} />) }
+        { adding && <RawFeed key={`raw-feed-add`} editing={adding} setAdding={setAdding} addFeed={addFeed} /> }
+        { adding || <button className="add-raw-feed-button" onClick={() => setAdding(true)}>Add Feed</button> }
+      </div>
     </>
   );
 }
