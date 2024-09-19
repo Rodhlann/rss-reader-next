@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import RawFeed, { RawFeedItem } from "@/components/rawFeed";
-import './Admin.css'
 
 export default function Admin() {
   const { data: session } = useSession()
