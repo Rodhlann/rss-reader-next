@@ -1,0 +1,70 @@
+html {
+  background-color: #212121;
+  color: lightgray;
+}
+
+h1, h2 {
+  color: mediumpurple;
+}
+
+a {
+  color: royalblue;
+}
+
+a:visited {
+  color: turquoise;
+}
+
+main {
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0 25%;
+}
+
+
+.feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.feed-category-label {
+  margin-left: 5px;
+  border: 1px solid turquoise;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background-color: #333;
+}
+
+.feed-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid mediumpurple;
+  padding: 5px 10px;
+  margin-bottom: 5px;
+}
+
+a {
+  margin-bottom: 5px;
+}
+
+.radio-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px; 
+}
+
+.radio-option {
+  background-color: #333;
+  border: 1px solid #333;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.radio-option input[type="radio"] {
+  display: none; 
+}
+
+.radio-checked {
+  border: 1px solid turquoise;
+}

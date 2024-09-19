@@ -1,18 +1,19 @@
 import Head from "next/head";
-import { Inter } from "next/font/google";
-import styles from "@/styles/Home.module.css";
 import { useEffect, useState } from "react";
 import { Feed } from "./api/feeds";
-
-const inter = Inter({ subsets: ["latin"] });
+import { FeedContent } from "@/components/FeedContent/feedContent";
+import { Filter } from "@/components/Filter/filter";
 
 export default function Home() {
+  const [loading, setLoading] = useState(true);
   const [feeds, setFeeds] = useState<Feed[]>();
-  
+  const [categoryFilter, setCategoryFilter] = useState<string>();
+
   useEffect(() => {
     const fetchFeeds = async () => {
       try {
         const response = await fetch('/api/feeds')
+        setLoading(false);
 
         if (!response.ok) {
           throw new Error(await response.text())
@@ -36,18 +37,36 @@ export default function Home() {
         <meta name="description" content="Stay updated with curated RSS feeds from timpepper.dev blog topics and beyond.
           Discover interesting content aligned with Tim Pepper's interests, studies, and work." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/terminal.png" />
       </Head>
-      <main className={`${styles.main} ${inter.className}`}>
+      <main>
         <h1>RSS Feeds</h1>
-        { feeds && feeds.map((feed) => (
-          <div key={`feed-${feed.name.toLowerCase().replace(' ', '-')}`}>
-            {feed.name}
-            {feed.entries.map((entry) =>
-              (<><br /><a key={`entry-${entry.title.toLowerCase().replace(' ', '-')}`} href={entry.url}>{entry.title}</a><br/></>)
-            )}
-          </div>
-        )) }
+        {loading 
+          ? (<p>Loading feeds...</p>) 
+          : (
+          <>
+            <Filter 
+              categories={Array.from(feeds?.reduce((acc, next) => acc.add(next.category), new Set()) || []) as string[]} 
+              categoryFilter={categoryFilter} 
+              setCategoryFilter={setCategoryFilter} 
+            />
+            { 
+              feeds && feeds
+                .filter((feed) => categoryFilter ? feed.category === categoryFilter : true)
+                .map((feed) => (
+                  <div key={`feed-${feed.name.toLowerCase().replace(' ', '-')}`}>
+                    <div className="feed-header">
+                      <h2>{feed.name}</h2>
+                      <label className="feed-category-label">{feed.category}</label>
+                    </div>
+                    {feed.entries.map((entry) =>
+                      <FeedContent key={`entry-${entry.title.toLowerCase().replace(' ', '-')}`} data={entry} />
+                    )}
+                  </div>
+                )) 
+            }
+          </>
+        )}
       </main>
     </>
   );

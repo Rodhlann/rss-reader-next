@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-type Entry = {
+export type Entry = {
   title: string,
   url: string,
   created_date: string
