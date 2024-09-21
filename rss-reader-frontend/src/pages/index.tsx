@@ -12,59 +12,77 @@ export default function Home() {
   useEffect(() => {
     const fetchFeeds = async () => {
       try {
-        const response = await fetch('/api/feeds')
+        const response = await fetch("/api/feeds");
         setLoading(false);
 
         if (!response.ok) {
-          throw new Error(await response.text())
+          throw new Error(await response.text());
         }
 
-        const data = await response.json()
-        setFeeds(data)
+        const data = await response.json();
+        setFeeds(data);
       } catch (error) {
-        console.error("Error fetching feed data:", error)
+        console.error("Error fetching feed data:", error);
       }
-    }
+    };
 
-    fetchFeeds()
-  }, [])
+    fetchFeeds();
+  }, []);
 
   return (
     <>
       <Head>
         <title>RSS Reader</title>
         <meta charSet="UTF-8" />
-        <meta name="description" content="Stay updated with curated RSS feeds from timpepper.dev blog topics and beyond.
-          Discover interesting content aligned with Tim Pepper's interests, studies, and work." />
+        <meta
+          name="description"
+          content="Stay updated with curated RSS feeds from timpepper.dev blog topics and beyond.
+          Discover interesting content aligned with Tim Pepper's interests, studies, and work."
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/terminal.png" />
       </Head>
       <main>
         <h1>RSS Feeds</h1>
-        {loading 
-          ? (<p>Loading feeds...</p>) 
-          : (
+        {loading ? (
+          <p>Loading feeds...</p>
+        ) : (
           <>
-            <Filter 
-              categories={Array.from(feeds?.reduce((acc, next) => acc.add(next.category), new Set()) || []) as string[]} 
-              categoryFilter={categoryFilter} 
-              setCategoryFilter={setCategoryFilter} 
+            <Filter
+              categories={
+                Array.from(
+                  feeds?.reduce(
+                    (acc, next) => acc.add(next.category),
+                    new Set(),
+                  ) || [],
+                ) as string[]
+              }
+              categoryFilter={categoryFilter}
+              setCategoryFilter={setCategoryFilter}
             />
-            { 
-              feeds && feeds
-                .filter((feed) => categoryFilter ? feed.category === categoryFilter : true)
+            {feeds &&
+              feeds
+                .filter((feed) =>
+                  categoryFilter ? feed.category === categoryFilter : true,
+                )
                 .map((feed) => (
-                  <div key={`feed-${feed.name.toLowerCase().replace(' ', '-')}`}>
+                  <div
+                    key={`feed-${feed.name.toLowerCase().replace(" ", "-")}`}
+                  >
                     <div className="feed-header">
                       <h2>{feed.name}</h2>
-                      <label className="feed-category-label">{feed.category}</label>
+                      <label className="feed-category-label">
+                        {feed.category}
+                      </label>
                     </div>
-                    {feed.entries.map((entry: Entry) =>
-                      <FeedContent key={`entry-${entry.title.toLowerCase().replace(' ', '-')}`} data={entry} />
-                    )}
+                    {feed.entries.map((entry: Entry) => (
+                      <FeedContent
+                        key={`entry-${entry.title.toLowerCase().replace(" ", "-")}`}
+                        data={entry}
+                      />
+                    ))}
                   </div>
-                )) 
-            }
+                ))}
           </>
         )}
       </main>
