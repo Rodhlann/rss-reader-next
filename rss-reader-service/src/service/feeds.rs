@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use axum::{extract::{Path, Query, State}, response::IntoResponse, Json};
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
@@ -6,6 +8,19 @@ use serde_json::{json, Value};
 use crate::{db::{FeedDataSource, FeedInput}, AppState};
 
 use super::{atom_to_json, fetch_feed_json, rss_to_json};
+
+#[derive(Deserialize, Serialize, Debug)]
+pub enum FeedError {
+  Message(String),
+}
+
+impl Display for FeedError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      FeedError::Message(msg) => write!(f, "Feed parse error: {}", msg),
+    }    
+  }
+}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Entry {
@@ -22,12 +37,14 @@ pub struct Feed {
 }
 
 impl Feed {
-  pub fn from_rss(name: String, category: String, max_entries: usize, value: Value) -> Self {
-    let items = rss_to_json(value).rss.channel.item;
+  pub fn try_from_rss(name: String, category: String, max_entries: usize, value: Value) -> Result<Self, FeedError> {
+    let items = rss_to_json(value)
+      .map_err(|e| FeedError::Message(e.to_string()))?
+      .rss.channel.item;
     let item_count = max_entries.min(items.len());
     let trimmed_items = &items[..item_count];
 
-    Self {
+    Ok(Self {
       name,
       category,
       entries: trimmed_items.iter().map(|item| Entry {
@@ -35,14 +52,16 @@ impl Feed {
         url: item.link.to_string(),
         created_date: item.pub_date.to_string()
       }).collect()
-    }
+    })
   }
 
-  pub fn from_atom(name: String, category: String, max_entries: usize, value: Value) -> Self {
-    let items = atom_to_json(value).feed.entry;
+  pub fn try_from_atom(name: String, category: String, max_entries: usize, value: Value) -> Result<Self, FeedError> {
+    let items = atom_to_json(value)
+      .map_err(|e| FeedError::Message(e.to_string()))?
+      .feed.entry;
     let item_count = max_entries.min(items.len());
     let trimmed_items = &items[..item_count];
-    Self {
+    Ok(Self {
       name,
       category,
       entries: trimmed_items.iter().map(|item| Entry {
@@ -50,7 +69,7 @@ impl Feed {
         url: item.link.iter().filter(|link| link.link_type == "text/html").nth(0).unwrap().href.to_string(),
         created_date: item.updated.to_string()
       }).collect()
-    }
+    })
   }
 }
 

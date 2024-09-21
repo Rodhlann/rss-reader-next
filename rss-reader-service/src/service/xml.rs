@@ -75,9 +75,11 @@ pub async fn fetch_feed_json(
     .map_err(|e| FetchXmlError::Parse(e.to_string()))?;
 
   if xml_string.contains("<rss") {
-    Ok(Feed::from_rss(feed_name.to_string(), feed_category.to_string(), max_entries, value))
+    Feed::try_from_rss(feed_name.to_string(), feed_category.to_string(), max_entries, value)
+      .map_err(|e| FetchXmlError::Parse(e.to_string()))
   } else if xml_string.contains("<feed") {
-    Ok(Feed::from_atom(feed_name.to_string(), feed_category.to_string(), max_entries, value))
+    Feed::try_from_atom(feed_name.to_string(), feed_category.to_string(), max_entries, value)
+      .map_err(|e| FetchXmlError::Parse(e.to_string()))
   } else {
     Err(FetchXmlError::Parse("Unknown feed syntax".to_string()))
   }

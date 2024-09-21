@@ -1,6 +1,21 @@
+use std::fmt::Display;
+
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_json::{from_value, Value};
+
+#[derive(Deserialize, Serialize, Debug)]
+pub enum RSSError {
+  Message(String),
+}
+
+impl Display for RSSError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      RSSError::Message(msg) => write!(f, "RSS: {}", msg),
+    }    
+  }
+}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct RSSItem {
@@ -46,6 +61,6 @@ where
   Err(de::Error::custom(&format!("Failed to parse RSS date: {}", &s)))
 }
                
-pub fn rss_to_json(value: Value) -> RSSObject {
-  from_value(value).unwrap()
+pub fn rss_to_json(value: Value) -> Result<RSSObject, RSSError> {
+  from_value(value).map_err(|e| RSSError::Message(e.to_string()))
 }
