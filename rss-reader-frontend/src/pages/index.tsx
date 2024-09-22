@@ -65,6 +65,7 @@ export default function Home() {
                 .filter((feed) =>
                   categoryFilter ? feed.category === categoryFilter : true,
                 )
+                .sort((a, b) => new Date(b.entries[0].created_date).getTime() - new Date(a.entries[0].created_date).getTime())
                 .map((feed) => (
                   <div
                     key={`feed-${feed.name.toLowerCase().replace(" ", "-")}`}

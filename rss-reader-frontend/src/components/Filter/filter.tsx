@@ -21,17 +21,19 @@ export const Filter = ({ categories, categoryFilter, setCategoryFilter }: Filter
   return (
     <div className="radio-group">
       { 
-        categories?.map((category, idx) => (
-          <label key={`category-${category}-${idx}`} className={`radio-option ${category === categoryFilter ? 'radio-checked' : ''}`}>
-            <input 
-              type="radio" 
-              name="options" 
-              value={category} 
-              onClick={(e) => handleClick(e, category)}
-            />
-            {category}
-          </label>
-        ))
+        categories && categories
+          .sort()
+          .map((category, idx) => (
+            <label key={`category-${category}-${idx}`} className={`radio-option ${category === categoryFilter ? 'radio-checked' : ''}`}>
+              <input 
+                type="radio" 
+                name="options" 
+                value={category} 
+                onClick={(e) => handleClick(e, category)}
+              />
+              {category}
+            </label>
+          ))
       }
     </div>
   )

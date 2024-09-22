@@ -10,10 +10,16 @@ h2 {
 
 a {
     color: royalblue;
+    text-decoration: underline;
+    margin-bottom: 5px;
+}
+
+a:hover {
+    color: turquoise;
 }
 
 a:visited {
-    color: turquoise;
+    color: plum;
 }
 
 main {
@@ -43,9 +49,6 @@ main {
     margin-bottom: 5px;
 }
 
-a {
-    margin-bottom: 5px;
-}
 
 .radio-group {
     display: grid;
@@ -61,21 +64,16 @@ a {
     text-align: center;
 }
 
+.radio-option:hover {
+    cursor: pointer;
+}
+
 .radio-option input[type="radio"] {
     display: none;
 }
 
 .radio-checked {
     border: 1px solid turquoise;
-}
-
-a {
-    text-decoration: underline;
-}
-
-a:hover {
-    text-decoration: underline;
-    color: plum;
 }
 
 .raw-feed-list {
