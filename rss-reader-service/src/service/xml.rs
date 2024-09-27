@@ -42,7 +42,7 @@ impl IntoResponse for FetchXmlError {
     }
 }
 
-async fn fetch_feed_xml(route: String) -> Result<String, FetchXmlError> {
+async fn fetch_feed_xml(route: &str) -> Result<String, FetchXmlError> {
   let response = reqwest::get(route).await.map_err(FetchXmlError::from)?;
   let content = response.text().await.map_err(FetchXmlError::from)?;
   Ok(content)
@@ -65,9 +65,9 @@ pub async fn fetch_feed_json(
   } else {
     // Else fetch xml_string, cache it, and return new value
     println!("No cached feed, fetching live: {feed_name}");
-    let new_xml_string = fetch_feed_xml(feed_url.to_string()).await?;
+    let new_xml_string = fetch_feed_xml(&feed_url).await?;
     let cache = CacheDataSource::new(&db.to_owned());
-    cache.cache_value(CacheInput { name: feed_name.to_string(), xml_string: new_xml_string.to_string() }).await
+    cache.cache_value(CacheInput { name: feed_name.to_string(), xml_string: new_xml_string.clone() }).await
       .map_err(|e| FetchXmlError::Cache(e.to_string()))?;
     new_xml_string
   };

@@ -121,21 +121,17 @@ pub async fn get_rss_feeds(
       let fetch_futures = feeds.into_iter().map(|feed| {
         println!("Preparing feed: {}", feed.name);
 
-        let name = feed.name.clone();
-        let category = feed.category.clone();
-        let url = feed.url.clone();
         let db = state.db.clone();
-
         async move {
           let result = fetch_feed_json(
-            &name, 
-            &category, 
-            &url,
+            &feed.name, 
+            &feed.category, 
+            &feed.url,
             duration,
-            max_entries, 
+            max_entries,
             db
           ).await;
-          (name, result)
+          (feed.name, result)
         }
       }).collect::<Vec<_>>();
 
