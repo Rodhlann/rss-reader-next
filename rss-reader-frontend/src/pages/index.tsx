@@ -7,12 +7,14 @@ import { Feed, Entry } from "./api/feeds";
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [feeds, setFeeds] = useState<Feed[]>();
+  const [count, setCount] = useState(5);
+  const [duration, setDuration] = useState('week');
   const [categoryFilter, setCategoryFilter] = useState<string>();
 
   useEffect(() => {
     const fetchFeeds = async () => {
       try {
-        const response = await fetch("/api/feeds");
+        const response = await fetch(`/api/feeds?max_entries=${count}&duration=${duration}`);
         setLoading(false);
 
         if (!response.ok) {
@@ -27,7 +29,7 @@ export default function Home() {
     };
 
     fetchFeeds();
-  }, []);
+  }, [count, duration]);
 
   return (
     <>
@@ -44,6 +46,26 @@ export default function Home() {
       </Head>
       <main>
         <h1>RSS Feeds</h1>
+        <div>
+          Show me the&nbsp;
+          <select defaultValue={count} onChange={(e) => setCount(Number(e.target.value))}>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          &nbsp;latest feeds
+        </div>
+        <div>
+          From the last&nbsp;
+          <select defaultValue={duration} onChange={(e) => setDuration(e.target.value)}>
+            <option value="day">Day</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+            <option value="year">Year</option>
+          </select>
+        </div>
+        <br />
         {loading ? (
           <p>Loading feeds...</p>
         ) : (
