@@ -19,8 +19,8 @@ export default function Home() {
           throw new Error(await response.text());
         }
 
-        const data = await response.json();
-        setFeeds(data);
+        const data = await response.json() as Feed[];
+        setFeeds(data.filter((feed) => !!feed.entries.length));
       } catch (error) {
         console.error("Error fetching feed data:", error);
       }
@@ -62,7 +62,6 @@ export default function Home() {
             />
             {feeds &&
               feeds
-                .filter((feed) => !!feed.entries.length)
                 .filter((feed) =>
                   categoryFilter ? feed.category === categoryFilter : true,
                 )
