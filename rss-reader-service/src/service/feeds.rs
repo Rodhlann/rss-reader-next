@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use axum::{extract::{Path, Query, State}, response::IntoResponse, Json};
+use chrono::Utc;
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -37,12 +38,14 @@ pub struct Feed {
 }
 
 impl Feed {
-  pub fn try_from_rss(name: String, category: String, max_entries: usize, value: Value) -> Result<Self, FeedError> {
+  pub fn try_from_rss(name: String, category: String, duration: Duration, max_entries: usize, value: Value) -> Result<Self, FeedError> {
     let items = rss_to_json(value)
       .map_err(|e| FeedError::Message(e.to_string()))?
       .rss.channel.item;
-    let item_count = max_entries.min(items.len());
-    let trimmed_items = &items[..item_count];
+
+    let items_in_duration: Vec<_> = items.iter().filter(|item| duration.compare(item.pub_date)).collect();
+    let item_count = max_entries.min(items_in_duration.len());
+    let trimmed_items = &items_in_duration[..item_count];
 
     Ok(Self {
       name,
@@ -55,12 +58,15 @@ impl Feed {
     })
   }
 
-  pub fn try_from_atom(name: String, category: String, max_entries: usize, value: Value) -> Result<Self, FeedError> {
+  pub fn try_from_atom(name: String, category: String, duration: Duration, max_entries: usize, value: Value) -> Result<Self, FeedError> {
     let items = atom_to_json(value)
       .map_err(|e| FeedError::Message(e.to_string()))?
       .feed.entry;
-    let item_count = max_entries.min(items.len());
-    let trimmed_items = &items[..item_count];
+
+    let items_in_duration: Vec<_> = items.iter().filter(|item| duration.compare(item.updated)).collect();
+    let item_count = max_entries.min(items_in_duration.len());
+    let trimmed_items = &items_in_duration[..item_count];
+
     Ok(Self {
       name,
       category,
@@ -73,8 +79,30 @@ impl Feed {
   }
 }
 
+#[derive(Deserialize, Debug, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+pub enum Duration {
+  DAY,
+  WEEK,
+  MONTH,
+  YEAR
+}
+
+impl Duration {
+  pub fn compare(&self, date: chrono::DateTime<Utc>) -> bool {
+    let now = Utc::now();
+    match self {
+      Duration::DAY => date >= now - chrono::Duration::days(1),
+      Duration::WEEK => date >= now - chrono::Duration::weeks(1),
+      Duration::MONTH => date >= now - chrono::Duration::weeks(4),
+      Duration::YEAR => date >= now - chrono::Duration::weeks(52),
+    }
+  } 
+}
+
 #[derive(Deserialize, Debug)]
 pub struct FeedsParam {
+  pub duration: Option<Duration>,
   pub max_entries: Option<usize>
 }
 
@@ -85,6 +113,7 @@ pub async fn get_rss_feeds(
   println!("Fetching all RSS feed data");
 
   let feed_db = FeedDataSource::new(state.db.clone());
+  let duration = params.duration.unwrap_or(Duration::WEEK);
   let max_entries = params.max_entries.unwrap_or(5);
 
   match feed_db.get_feeds().await {
@@ -102,6 +131,7 @@ pub async fn get_rss_feeds(
             &name, 
             &category, 
             &url,
+            duration,
             max_entries, 
             db
           ).await;

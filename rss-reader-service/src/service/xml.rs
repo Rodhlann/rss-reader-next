@@ -7,7 +7,7 @@ use sqlx::PgPool;
 
 use crate::db::{CacheDataSource, CacheInput};
 
-use super::{fetch_cached, Feed};
+use super::{fetch_cached, Duration, Feed};
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -52,6 +52,7 @@ pub async fn fetch_feed_json(
   feed_name: &str, 
   feed_category: &str, 
   feed_url: &str,
+  duration: Duration,
   max_entries: usize,
   db: PgPool,
 ) -> Result<Feed, FetchXmlError> {
@@ -75,10 +76,10 @@ pub async fn fetch_feed_json(
     .map_err(|e| FetchXmlError::Parse(e.to_string()))?;
 
   if xml_string.contains("<rss") {
-    Feed::try_from_rss(feed_name.to_string(), feed_category.to_string(), max_entries, value)
+    Feed::try_from_rss(feed_name.to_string(), feed_category.to_string(), duration, max_entries, value)
       .map_err(|e| FetchXmlError::Parse(e.to_string()))
   } else if xml_string.contains("<feed") {
-    Feed::try_from_atom(feed_name.to_string(), feed_category.to_string(), max_entries, value)
+    Feed::try_from_atom(feed_name.to_string(), feed_category.to_string(), duration, max_entries, value)
       .map_err(|e| FetchXmlError::Parse(e.to_string()))
   } else {
     Err(FetchXmlError::Parse("Unknown feed syntax".to_string()))
