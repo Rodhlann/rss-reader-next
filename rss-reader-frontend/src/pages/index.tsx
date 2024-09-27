@@ -62,6 +62,7 @@ export default function Home() {
             />
             {feeds &&
               feeds
+                .filter((feed) => !!feed.entries.length)
                 .filter((feed) =>
                   categoryFilter ? feed.category === categoryFilter : true,
                 )
