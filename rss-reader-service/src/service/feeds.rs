@@ -1,12 +1,12 @@
 use std::fmt::Display;
 
 use axum::{extract::{Path, Query, State}, response::IntoResponse, Json};
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::{db::{FeedDataSource, FeedInput}, AppState};
+use crate::{db::{FeedDataSource, FeedInput}, service::AtomEntry, AppState};
 
 use super::{atom_to_json, fetch_feed_json, rss_to_json};
 
@@ -63,7 +63,13 @@ impl Feed {
       .map_err(|e| FeedError::Message(e.to_string()))?
       .feed.entry;
 
-    let items_in_duration: Vec<_> = items.iter().filter(|item| duration.compare(item.updated)).collect();
+    fn date(entry: &AtomEntry) -> DateTime<Utc> {
+      entry.published
+          .or(entry.updated)
+          .unwrap_or(DateTime::UNIX_EPOCH)
+    }
+
+    let items_in_duration: Vec<_> = items.iter().filter(|item| duration.compare(date(item))).collect();
     let item_count = max_entries.min(items_in_duration.len());
     let trimmed_items = &items_in_duration[..item_count];
 
@@ -72,8 +78,8 @@ impl Feed {
       category,
       entries: trimmed_items.iter().map(|item| Entry {
         title: item.title.to_string(),
-        url: item.link.iter().filter(|link| link.link_type == "text/html").nth(0).unwrap().href.to_string(),
-        created_date: item.updated.to_string()
+        url: item.link.to_string(),
+        created_date: date(item).to_string()
       }).collect()
     })
   }

@@ -65,7 +65,7 @@ pub async fn fetch_feed_json(
   } else {
     // Else fetch xml_string, cache it, and return new value
     println!("No cached feed, fetching live: {feed_name}");
-    let new_xml_string = fetch_feed_xml(&feed_url).await?;
+    let new_xml_string = fetch_feed_xml(feed_url).await?;
     let cache = CacheDataSource::new(&db.to_owned());
     cache.cache_value(CacheInput { name: feed_name.to_string(), xml_string: new_xml_string.clone() }).await
       .map_err(|e| FetchXmlError::Cache(e.to_string()))?;
