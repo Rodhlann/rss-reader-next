@@ -2,4 +2,4 @@
 .shuttle-storage
 Secrets*.toml
 .env
-Secrets.toml
+Secrets.toml.shuttle*
