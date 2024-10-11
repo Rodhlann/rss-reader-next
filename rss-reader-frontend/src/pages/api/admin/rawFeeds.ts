@@ -6,7 +6,7 @@ export default async function rawFeeds(req: NextApiRequest, res: NextApiResponse
   const accessToken = token?.accessToken;
 
   if (accessToken) {
-    const response = await fetch('https://rss-reader-service.shuttleapp.rs/admin', { 
+    const response = await fetch(`${process.env.RSS_READER_SERVICE_URL}/admin`, { 
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }

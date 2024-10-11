@@ -8,7 +8,7 @@ export default async function deleteFeed(req: NextApiRequest, res: NextApiRespon
   const { id } = JSON.parse(req.body);
 
   if (accessToken) {
-    const response = await fetch(`https://rss-reader-service.shuttleapp.rs/admin/${id}`, { 
+    const response = await fetch(`${process.env.RSS_READER_SERVICE_URL}/admin/${id}`, { 
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
