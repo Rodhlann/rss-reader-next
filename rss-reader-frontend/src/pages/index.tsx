@@ -8,7 +8,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [feeds, setFeeds] = useState<Feed[]>();
   const [count, setCount] = useState(5);
-  const [duration, setDuration] = useState('week');
+  const [duration, setDuration] = useState('WEEK');
   const [categoryFilter, setCategoryFilter] = useState<string>();
 
   useEffect(() => {
@@ -59,10 +59,10 @@ export default function Home() {
         <div>
           From the last&nbsp;
           <select defaultValue={duration} onChange={(e) => setDuration(e.target.value)}>
-            <option value="day">Day</option>
-            <option value="week">Week</option>
-            <option value="month">Month</option>
-            <option value="year">Year</option>
+            <option value="DAY">Day</option>
+            <option value="WEEK">Week</option>
+            <option value="MONTH">Month</option>
+            <option value="YEAR">Year</option>
           </select>
         </div>
         <br />
