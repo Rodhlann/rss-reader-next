@@ -5,7 +5,7 @@ export const FeedContent = ({ data }: { data: Entry }) => {
     <div className="feed-content-wrapper">
       <a href={data.url}>{data.title}</a>
       <label>
-        {new Date(data.created_date.replace(/-/g, "/")).toLocaleDateString()}
+        {new Date(data.created_date).toLocaleDateString()}
       </label>
     </div>
   );
